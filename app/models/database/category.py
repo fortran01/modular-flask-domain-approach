@@ -1,9 +1,13 @@
 # app/models/database/category.py
+from __future__ import annotations
+from typing import TYPE_CHECKING, List
 from app import db
 from datetime import datetime
-from typing import List
-from app.models.database.product import ProductTable
-from app.models.database.point_earning_rule import PointEarningRuleTable
+from sqlalchemy.orm import Mapped, relationship
+
+if TYPE_CHECKING:
+    from app.models.database.product import ProductTable
+    from app.models.database.point_earning_rule import PointEarningRuleTable
 
 
 class CategoryTable(db.Model):
@@ -28,14 +32,15 @@ class CategoryTable(db.Model):
     """
 
     __tablename__: str = 'categories'
-    id: int = db.Column(db.Integer, primary_key=True)
-    name: str = db.Column(db.String(50), nullable=False)
-    created_at: datetime = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at: datetime = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    name: Mapped[str] = db.Column(db.String(50), nullable=False)
+    created_at: Mapped[datetime] = db.Column(
+        db.DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    products: List[ProductTable] = db.relationship(
+    products: Mapped[List[ProductTable]] = relationship(
         'ProductTable', back_populates='category')
-    point_earning_rules: List[PointEarningRuleTable] = db.relationship(
+    point_earning_rules: Mapped[List[PointEarningRuleTable]] = relationship(
         'PointEarningRuleTable', back_populates='category')
