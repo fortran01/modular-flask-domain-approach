@@ -4,18 +4,23 @@ from app.repositories.customer_repository import CustomerRepository
 from app.repositories.loyalty_account_repository import (
     LoyaltyAccountRepository
 )
-from app.models.database.customer import CustomerTable
-from app.models.database.loyalty_account import LoyaltyAccountTable
+from app.models.domain.customer import Customer
+from app.models.domain.loyalty_account import LoyaltyAccount
 from app.schemas.customer import (
-    CustomerCreateDto, CustomerUpdateDto, CustomerResponseDto
+    CustomerCreateDto,
+    CustomerUpdateDto,
+    CustomerResponseDto
 )
 
 
 class CustomerService:
     """Service layer for handling customer-related operations."""
 
-    def __init__(self, customer_repository: CustomerRepository,
-                 loyalty_account_repository: LoyaltyAccountRepository):
+    def __init__(
+        self,
+        customer_repository: CustomerRepository,
+        loyalty_account_repository: LoyaltyAccountRepository
+    ):
         """
         Initializes the CustomerService with required repositories.
 
@@ -23,10 +28,10 @@ class CustomerService:
             customer_repository (CustomerRepository): Repository for
                 customer data.
             loyalty_account_repository (LoyaltyAccountRepository): Repository
-                for loyalty account data.
+            for loyalty account data.
         """
-        self.customer_repository = customer_repository
-        self.loyalty_account_repository = loyalty_account_repository
+        self.customer_repository: CustomerRepository = customer_repository
+        self.loyalty_account_repository: LoyaltyAccountRepository = loyalty_account_repository  # noqa: E501
 
     def find_by_id(self, id: int) -> Optional[CustomerResponseDto]:
         """
@@ -39,12 +44,12 @@ class CustomerService:
             Optional[CustomerResponseDto]: The customer's data,
             or None if not found.
         """
-        customer = self.customer_repository.find_by_id(id)
+        customer: Optional[Customer] = self.customer_repository.find_by_id(id)
         if customer:
             return CustomerResponseDto(
                 id=customer.id,
                 name=customer.name,
-                email=customer.email,
+                email=customer.email
             )
         return None
 
@@ -53,25 +58,30 @@ class CustomerService:
         Creates a new customer and their associated loyalty account.
 
         Args:
-            customer_dto (CustomerCreateDto): Data transfer object containing
-                customer data.
+            customer_dto (CustomerCreateDto): Data transfer object
+            containing customer data.
 
         Returns:
             CustomerResponseDto: The created customer's data.
         """
-        customer = CustomerTable(
-            name=customer_dto.name, email=customer_dto.email)
-        created_customer = self.customer_repository.create(customer)
+        customer: Customer = Customer(
+            id=0,  # ID will be assigned by the database
+            name=customer_dto.name,
+            email=customer_dto.email
+        )
+        created_customer: Customer = self.customer_repository.create(customer)
 
-        loyalty_account = LoyaltyAccountTable(
-            customer_id=created_customer.id, points=0)
-        self.loyalty_account_repository.create(
-            loyalty_account)
+        loyalty_account: LoyaltyAccount = LoyaltyAccount(
+            id=0,  # ID will be assigned by the database
+            customer_id=created_customer.id,
+            points=0
+        )
+        self.loyalty_account_repository.create(loyalty_account)
 
         return CustomerResponseDto(
             id=created_customer.id,
             name=created_customer.name,
-            email=created_customer.email,
+            email=created_customer.email
         )
 
     def update(self, id: int, customer_dto: CustomerUpdateDto) -> Optional[CustomerResponseDto]:  # noqa: E501
@@ -81,23 +91,24 @@ class CustomerService:
         Args:
             id (int): The ID of the customer to update.
             customer_dto (CustomerUpdateDto): Data transfer object containing
-                updated customer data.
+            updated customer data.
 
         Returns:
             Optional[CustomerResponseDto]: The updated customer's data,
-              or None if not found.
+            or None if not found.
         """
-        customer = self.customer_repository.find_by_id(id)
+        customer: Optional[Customer] = self.customer_repository.find_by_id(id)
         if customer:
             if customer_dto.name:
                 customer.name = customer_dto.name
             if customer_dto.email:
                 customer.email = customer_dto.email
-            updated_customer = self.customer_repository.update(customer)
+            updated_customer: Customer = self.customer_repository.update(
+                customer)
             return CustomerResponseDto(
                 id=updated_customer.id,
                 name=updated_customer.name,
-                email=updated_customer.email,
+                email=updated_customer.email
             )
         return None
 
@@ -117,9 +128,9 @@ class CustomerService:
         Returns:
             List[CustomerResponseDto]: List of all customer data.
         """
-        customers = self.customer_repository.find_all()
+        customers: List[Customer] = self.customer_repository.find_all()
         return [CustomerResponseDto(
             id=customer.id,
             name=customer.name,
-            email=customer.email,
+            email=customer.email
         ) for customer in customers]

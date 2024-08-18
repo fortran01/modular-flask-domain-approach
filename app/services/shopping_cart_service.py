@@ -2,7 +2,7 @@
 from typing import Optional
 from app.repositories.shopping_cart_repository import ShoppingCartRepository
 from app.repositories.product_repository import ProductRepository
-from app.models.database.shopping_cart import ShoppingCartTable
+from app.models.domain.shopping_cart import ShoppingCart
 from app.schemas.shopping_cart import (
     ShoppingCartResponseDto,
     ShoppingCartItemDto
@@ -15,7 +15,7 @@ class ShoppingCartService:
         self,
         shopping_cart_repository: ShoppingCartRepository,
         product_repository: ProductRepository
-    ):
+    ) -> None:
         """
         Initializes the ShoppingCartService with required repositories.
 
@@ -23,12 +23,13 @@ class ShoppingCartService:
             shopping_cart_repository (ShoppingCartRepository): Repository for
                 shopping cart operations.
             product_repository (ProductRepository): Repository for
-            product data.
+                product data.
         """
-        self.shopping_cart_repository = shopping_cart_repository
-        self.product_repository = product_repository
+        self.shopping_cart_repository: ShoppingCartRepository = \
+            shopping_cart_repository
+        self.product_repository: ProductRepository = product_repository
 
-    async def get_or_create_cart(self, customer_id: int) -> ShoppingCartTable:
+    def get_or_create_cart(self, customer_id: int) -> ShoppingCart:
         """
         Retrieves an existing shopping cart or creates a new one if it does not
         exist.
@@ -37,15 +38,16 @@ class ShoppingCartService:
             customer_id (int): The ID of the customer.
 
         Returns:
-            ShoppingCartTable: The retrieved or newly created shopping cart.
+            ShoppingCart: The retrieved or newly created shopping cart.
         """
-        cart = self.shopping_cart_repository.find_by_customer_id(customer_id)
+        cart: Optional[ShoppingCart] = \
+            self.shopping_cart_repository.find_by_customer_id(customer_id)
         if not cart:
-            cart = ShoppingCartTable(customer_id=customer_id)
+            cart = ShoppingCart(id=0, customer_id=customer_id)
             cart = self.shopping_cart_repository.create(cart)
         return cart
 
-    async def add_item(
+    def add_item(
         self, customer_id: int, product_id: int, quantity: int
     ) -> None:
         """
@@ -56,10 +58,14 @@ class ShoppingCartService:
             product_id (int): The ID of the product to add.
             quantity (int): The quantity of the product to add.
         """
-        cart = await self.get_or_create_cart(customer_id)
-        self.shopping_cart_repository.add_item(cart.id, product_id, quantity)
+        cart: ShoppingCart = self.get_or_create_cart(customer_id)
+        product: Optional[ProductResponseDto] = \
+            self.product_repository.find_by_id(product_id)
+        if product:
+            cart.add_item(product, quantity)
+            self.shopping_cart_repository.update(cart)
 
-    async def remove_item(self, customer_id: int, product_id: int) -> None:
+    def remove_item(self, customer_id: int, product_id: int) -> None:
         """
         Removes an item from the shopping cart.
 
@@ -67,10 +73,11 @@ class ShoppingCartService:
             customer_id (int): The ID of the customer.
             product_id (int): The ID of the product to remove.
         """
-        cart = await self.get_or_create_cart(customer_id)
-        self.shopping_cart_repository.remove_item(cart.id, product_id)
+        cart: ShoppingCart = self.get_or_create_cart(customer_id)
+        cart.remove_item(product_id)
+        self.shopping_cart_repository.update(cart)
 
-    async def update_item_quantity(
+    def update_item_quantity(
         self, customer_id: int, product_id: int, quantity: int
     ) -> None:
         """
@@ -81,11 +88,11 @@ class ShoppingCartService:
             product_id (int): The ID of the product to update.
             quantity (int): The new quantity of the product.
         """
-        cart = await self.get_or_create_cart(customer_id)
-        self.shopping_cart_repository.update_item_quantity(
-            cart.id, product_id, quantity)
+        cart: ShoppingCart = self.get_or_create_cart(customer_id)
+        cart.update_item_quantity(product_id, quantity)
+        self.shopping_cart_repository.update(cart)
 
-    async def get_cart(
+    def get_cart(
         self, customer_id: int
     ) -> Optional[ShoppingCartResponseDto]:
         """
@@ -98,24 +105,24 @@ class ShoppingCartService:
             Optional[ShoppingCartResponseDto]: The shopping cart data or None
                 if the cart does not exist.
         """
-        cart = self.shopping_cart_repository.find_by_customer_id(customer_id)
+        cart: Optional[ShoppingCart] = \
+            self.shopping_cart_repository.find_by_customer_id(customer_id)
         if not cart:
             return None
 
-        items = []
+        items: list[ShoppingCartItemDto] = []
         for item in cart.items:
-            product = self.product_repository.find_by_id(item.product_id)
-            if product:
-                items.append(ShoppingCartItemDto(
-                    product=ProductResponseDto(
-                        id=product.id,
-                        name=product.name,
-                        price=product.price,
-                        category_id=product.category_id,
-                        image_url=product.image_url
-                    ),
-                    quantity=item.quantity
-                ))
+            product: ProductResponseDto = item.product
+            items.append(ShoppingCartItemDto(
+                product=ProductResponseDto(
+                    id=product.id,
+                    name=product.name,
+                    price=product.price,
+                    category_id=product.category_id,
+                    image_url=product.image_url
+                ),
+                quantity=item.quantity
+            ))
 
         return ShoppingCartResponseDto(
             id=cart.id,
@@ -123,12 +130,13 @@ class ShoppingCartService:
             items=items
         )
 
-    async def clear_cart(self, customer_id: int) -> None:
+    def clear_cart(self, customer_id: int) -> None:
         """
         Clears all items from a customer's shopping cart.
 
         Args:
             customer_id (int): The ID of the customer.
         """
-        cart = await self.get_or_create_cart(customer_id)
-        self.shopping_cart_repository.clear_cart(cart.id)
+        cart: ShoppingCart = self.get_or_create_cart(customer_id)
+        cart.clear()
+        self.shopping_cart_repository.update(cart)

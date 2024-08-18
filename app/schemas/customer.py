@@ -1,8 +1,6 @@
 # app/schemas/customer.py
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
-from .loyalty_account import LoyaltyAccountResponseDto
-from .shopping_cart import ShoppingCartResponseDto
+from typing import Optional
 
 
 class CustomerCreateDto(BaseModel):
@@ -38,13 +36,7 @@ class CustomerResponseDto(BaseModel):
         id (int): The unique identifier of the customer.
         name (str): The name of the customer.
         email (EmailStr): The email address of the customer.
-        loyalty_account (Optional[LoyaltyAccountResponseDto]): The loyalty
-            account associated with the customer, if any.
-        shopping_carts (List[ShoppingCartResponseDto]): A list of shopping
-            carts associated with the customer.
     """
     id: int
     name: str
     email: EmailStr
-    loyalty_account: Optional[LoyaltyAccountResponseDto] = None
-    shopping_carts: List[ShoppingCartResponseDto] = []

@@ -1,8 +1,12 @@
 # app/models/database/customer.py
+from __future__ import annotations
 from app import db
 from datetime import datetime
-from typing import Optional, List
-from app.models.database.loyalty_account import LoyaltyAccountTable
+from typing import Optional, List, TYPE_CHECKING
+from sqlalchemy.orm import Mapped, relationship
+
+if TYPE_CHECKING:
+    from app.models.database.loyalty_account import LoyaltyAccountTable
 from app.models.database.shopping_cart import ShoppingCartTable
 
 
@@ -30,15 +34,16 @@ class CustomerTable(db.Model):
     """
 
     __tablename__: str = 'customers'
-    id: int = db.Column(db.Integer, primary_key=True)
-    name: str = db.Column(db.String(100), nullable=False)
-    email: str = db.Column(db.String(120), unique=True, nullable=False)
-    created_at: datetime = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at: datetime = db.Column(
+    id: Mapped[int] = db.Column(db.Integer, primary_key=True)
+    name: Mapped[str] = db.Column(db.String(100), nullable=False)
+    email: Mapped[str] = db.Column(db.String(120), unique=True, nullable=False)
+    created_at: Mapped[datetime] = db.Column(
+        db.DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    loyalty_account: Optional[LoyaltyAccountTable] = db.relationship(
+    loyalty_account: Mapped[Optional[LoyaltyAccountTable]] = relationship(
         'LoyaltyAccountTable', back_populates='customer', uselist=False)
-    shopping_carts: List[ShoppingCartTable] = db.relationship(
+    shopping_carts: Mapped[List[ShoppingCartTable]] = relationship(
         'ShoppingCartTable', back_populates='customer')
