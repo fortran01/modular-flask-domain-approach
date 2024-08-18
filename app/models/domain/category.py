@@ -1,7 +1,11 @@
 # app/models/domain/category.py
-from typing import List
-from app.models.domain.product import Product
-from app.models.domain.point_earning_rule import PointEarningRule
+from __future__ import annotations
+from typing import TYPE_CHECKING, List
+from sqlalchemy.orm import Mapped
+
+if TYPE_CHECKING:
+    from app.models.domain.product import Product
+    from app.models.domain.point_earning_rule import PointEarningRule
 
 
 class Category:
@@ -25,8 +29,8 @@ class Category:
         self,
         id: int,
         name: str,
-        products: List[Product] = None,
-        point_earning_rules: List[PointEarningRule] = None
+        products: List['Product'] = None,
+        point_earning_rules: List['PointEarningRule'] = None
     ):
         """
         Initializes a new Category instance.
@@ -40,9 +44,9 @@ class Category:
                 point earning rules associated with this category.
                 Defaults to None.
         """
-        self.id: int = id
-        self.name: str = name
-        self.products: List[Product] = products or []
-        self.point_earning_rules: List[PointEarningRule] = (
+        self.id: Mapped[int] = id
+        self.name: Mapped[str] = name
+        self.products: Mapped[List['Product']] = products or []
+        self.point_earning_rules: Mapped[List['PointEarningRule']] = (
             point_earning_rules or []
         )
