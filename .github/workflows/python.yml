@@ -38,4 +38,6 @@ jobs:
       - name: Build and run
         run: |
           export FLASK_APP=app
-          flask run
+          flask run &
+          sleep 2  # Allow some time for the server to start
+          kill $!  # Terminate the background Flask process
