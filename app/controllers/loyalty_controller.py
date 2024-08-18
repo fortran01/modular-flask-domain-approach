@@ -43,7 +43,7 @@ def logout() -> Response:
 
 
 @bp.route('/checkout', methods=['POST'])
-@AuthGuard.can_activate
+@AuthGuard.auth_required
 def checkout() -> Response:
     """
     Processes a checkout request, applying loyalty points based on the
@@ -60,7 +60,7 @@ def checkout() -> Response:
 
 
 @bp.route('/points', methods=['GET'])
-@AuthGuard.can_activate
+@AuthGuard.auth_required
 def get_points() -> Response:
     """
     Retrieves the loyalty points for a customer based on their ID stored in
