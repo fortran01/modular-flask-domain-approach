@@ -1,5 +1,5 @@
 # app/controllers/loyalty_controller.py
-from flask import Blueprint, request, jsonify, g, make_response
+from flask import Blueprint, request, jsonify, g, make_response, abort
 from app.serialization.loyalty_serializer import LoyaltySerializer
 from app.guards.auth_guard import AuthGuard
 bp = Blueprint('loyalty', __name__)
@@ -18,7 +18,8 @@ def login() -> make_response:
     data = request.json
     customer_id = data.get('customer_id')
     if not customer_id:
-        return make_response(jsonify({'error': 'Customer ID is required'}), 400)
+        return make_response(jsonify({'error': 'Customer ID is required'}),
+                             400)
     customer = customer_service.find_by_id(int(customer_id))
     if not customer:
         return make_response(jsonify({'error': 'Invalid customer ID'}), 401)
@@ -34,7 +35,8 @@ def logout() -> make_response:
     Log out a customer by deleting their ID cookie.
 
     Returns:
-        make_response: A JSON response indicating success, with HTTP status code.
+        make_response: A JSON response indicating success,
+        with HTTP status code.
     """
     response = make_response(jsonify({'success': True}), 200)
     response.delete_cookie('customer_id')
@@ -73,3 +75,70 @@ def get_points() -> make_response:
     points = loyalty_service.get_customer_points(int(customer_id))
     serialized = LoyaltySerializer.serialize_points(points)
     return make_response(jsonify(serialized), 200)
+
+
+@bp.route('/cart', methods=['POST'])
+@AuthGuard.auth_required
+def add_to_cart():
+    """
+    Adds an item to the shopping cart.
+    """
+    shopping_cart_service = g.container.resolve('shopping_cart_service')
+    customer_id = g.customer_id
+    product_id = request.json.get('product_id')
+    quantity = request.json.get('quantity')
+    shopping_cart_service.add_item(
+        int(customer_id), int(product_id), int(quantity))
+    return make_response(jsonify({'success': True}), 200)
+
+
+@bp.route('/cart', methods=['GET'])
+@AuthGuard.auth_required
+def get_cart():
+    """
+    Retrieves the shopping cart for a customer.
+    """
+    shopping_cart_service = g.container.resolve('shopping_cart_service')
+    customer_id = g.customer_id
+    cart = shopping_cart_service.get_cart(int(customer_id))
+    if not cart:
+        abort(404, description="Shopping cart not found")
+    return make_response(jsonify(cart), 200)
+
+
+@bp.route('/cart/<int:product_id>', methods=['PUT'])
+@AuthGuard.auth_required
+def update_cart_item(product_id):
+    """
+    Updates a cart item's quantity.
+    """
+    shopping_cart_service = g.container.resolve('shopping_cart_service')
+    customer_id = g.customer_id
+    quantity = request.json.get('quantity')
+    shopping_cart_service.update_item_quantity(
+        int(customer_id), product_id, int(quantity))
+    return make_response(jsonify({'success': True}), 200)
+
+
+@bp.route('/cart/<int:product_id>', methods=['DELETE'])
+@AuthGuard.auth_required
+def remove_from_cart(product_id):
+    """
+    Removes an item from the shopping cart.
+    """
+    shopping_cart_service = g.container.resolve('shopping_cart_service')
+    customer_id = g.customer_id
+    shopping_cart_service.remove_item(int(customer_id), product_id)
+    return make_response(jsonify({'success': True}), 200)
+
+
+@bp.route('/cart', methods=['DELETE'])
+@AuthGuard.auth_required
+def clear_cart():
+    """
+    Clears the shopping cart for a customer.
+    """
+    shopping_cart_service = g.container.resolve('shopping_cart_service')
+    customer_id = g.customer_id
+    shopping_cart_service.clear_cart(int(customer_id))
+    return make_response(jsonify({'success': True}), 200)
