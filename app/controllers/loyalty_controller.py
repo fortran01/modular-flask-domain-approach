@@ -1,12 +1,13 @@
 # app/controllers/loyalty_controller.py
-from flask import Blueprint, request, jsonify, g, make_response, abort
+from flask import (Blueprint, request, jsonify, g, make_response, abort,
+                   Response)
 from app.serialization.loyalty_serializer import LoyaltySerializer
 from app.guards.auth_guard import AuthGuard
 bp = Blueprint('loyalty', __name__)
 
 
 @bp.route('/login', methods=['POST'])
-def login() -> make_response:
+def login() -> Response:
     """
     Authenticate a customer and set a secure cookie with their ID.
 
@@ -30,7 +31,7 @@ def login() -> make_response:
 
 
 @bp.route('/logout', methods=['GET'])
-def logout() -> make_response:
+def logout() -> Response:
     """
     Log out a customer by deleting their ID cookie.
 
@@ -45,7 +46,7 @@ def logout() -> make_response:
 
 @bp.route('/checkout', methods=['POST'])
 @AuthGuard.auth_required
-def checkout() -> make_response:
+def checkout() -> Response:
     """
     Processes a checkout request, applying loyalty points based on the
     customer's ID stored in cookies.
@@ -62,7 +63,7 @@ def checkout() -> make_response:
 
 @bp.route('/points', methods=['GET'])
 @AuthGuard.auth_required
-def get_points() -> make_response:
+def get_points() -> Response:
     """
     Retrieves the loyalty points for a customer based on their ID stored in
     cookies.
@@ -79,7 +80,7 @@ def get_points() -> make_response:
 
 @bp.route('/cart', methods=['POST'])
 @AuthGuard.auth_required
-def add_to_cart():
+def add_to_cart() -> Response:
     """
     Adds an item to the shopping cart.
     """
@@ -94,7 +95,7 @@ def add_to_cart():
 
 @bp.route('/cart', methods=['GET'])
 @AuthGuard.auth_required
-def get_cart():
+def get_cart() -> Response:
     """
     Retrieves the shopping cart for a customer.
     """
@@ -108,7 +109,7 @@ def get_cart():
 
 @bp.route('/cart/<int:product_id>', methods=['PUT'])
 @AuthGuard.auth_required
-def update_cart_item(product_id):
+def update_cart_item(product_id) -> Response:
     """
     Updates a cart item's quantity.
     """
@@ -122,7 +123,7 @@ def update_cart_item(product_id):
 
 @bp.route('/cart/<int:product_id>', methods=['DELETE'])
 @AuthGuard.auth_required
-def remove_from_cart(product_id):
+def remove_from_cart(product_id) -> Response:
     """
     Removes an item from the shopping cart.
     """
@@ -134,7 +135,7 @@ def remove_from_cart(product_id):
 
 @bp.route('/cart', methods=['DELETE'])
 @AuthGuard.auth_required
-def clear_cart():
+def clear_cart() -> Response:
     """
     Clears the shopping cart for a customer.
     """
