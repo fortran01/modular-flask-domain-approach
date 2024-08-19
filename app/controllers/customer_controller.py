@@ -1,5 +1,5 @@
 # app/controllers/customer_controller.py
-from flask import Blueprint, request, jsonify, g, Response
+from flask import Blueprint, request, jsonify, g, Response, make_response
 from app.serialization.customer_serializer import CustomerSerializer
 from app.guards.auth_guard import AuthGuard
 from typing import List, Dict, Any
@@ -23,7 +23,7 @@ def get_all_customers() -> Response:
         CustomerSerializer.serialize_response(customer) for customer in
         customers
     ]
-    return jsonify(serialized_customers), 200
+    return make_response(jsonify(serialized_customers), 200)
 
 
 @bp.route('/customers/<int:id>', methods=['GET'])
@@ -45,8 +45,8 @@ def get_customer(id: int) -> Response:
     if customer:
         serialized_customer: Dict[str, Any] = CustomerSerializer. \
             serialize_response(customer)
-        return jsonify(serialized_customer), 200
-    return jsonify({'message': 'Customer not found'}), 404
+        return make_response(jsonify(serialized_customer), 200)
+    return make_response(jsonify({'message': 'Customer not found'}), 404)
 
 
 @bp.route('/customers', methods=['POST'])
@@ -66,7 +66,7 @@ def create_customer() -> Response:
     created_customer = customer_service.create(customer_dto)
     serialized_customer: Dict[str, Any] = CustomerSerializer. \
         serialize_response(created_customer)
-    return jsonify(serialized_customer), 201
+    return make_response(jsonify(serialized_customer), 201)
 
 
 @bp.route('/customers/<int:id>', methods=['PUT'])
@@ -90,8 +90,8 @@ def update_customer(id: int) -> Response:
     if updated_customer:
         serialized_customer: Dict[str, Any] = CustomerSerializer. \
             serialize_response(updated_customer)
-        return jsonify(serialized_customer), 200
-    return jsonify({'message': 'Customer not found'}), 404
+        return make_response(jsonify(serialized_customer), 200)
+    return make_response(jsonify({'message': 'Customer not found'}), 404)
 
 
 @bp.route('/customers/<int:id>', methods=['DELETE'])
@@ -109,4 +109,4 @@ def delete_customer(id: int) -> Response:
     """
     customer_service = g.container.resolve('customer_service')
     customer_service.delete(id)
-    return '', 204
+    return make_response('', 204)
