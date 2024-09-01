@@ -39,5 +39,10 @@ jobs:
         run: |
           export FLASK_APP=app
           flask run &
-          sleep 2  # Allow some time for the server to start
-          kill $!  # Terminate the background Flask process
+          PID=$!
+          sleep 3  # Allow some time for the server to start
+          if ! kill -0 $PID; then
+            echo "Application failed to start."
+            exit 1
+          fi
+          kill $PID
