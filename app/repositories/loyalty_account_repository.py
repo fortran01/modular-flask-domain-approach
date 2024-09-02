@@ -1,56 +1,126 @@
 # app/repositories/loyalty_account_repository.py
+from typing import Optional, Dict, Any
+from datetime import datetime
 from app.repositories.base_repository import BaseRepository
 from app.models.database.loyalty_account import LoyaltyAccountTable
 from app.models.database.point_transaction import PointTransactionTable
 from app.models.database.product import ProductTable
 from app.models.database.point_earning_rule import PointEarningRuleTable
 from app.models.database.shopping_cart import ShoppingCartTable
-from datetime import datetime
-from typing import Optional, Dict
+from app.models.domain.loyalty_account import LoyaltyAccount
+from app.mappers.loyalty_account_mapper import LoyaltyAccountMapper
+from app.mappers.product_mapper import ProductMapper
 from app import db
 
 
 class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
     def __init__(self):
-        """Initializes the repository for LoyaltyAccount data."""
+        """
+        Initializes the LoyaltyAccountRepository with the
+        LoyaltyAccountTable model.
+        """
         super().__init__(LoyaltyAccountTable)
 
-    def find_by_customer_id(self, customer_id: int) -> Optional[LoyaltyAccountTable]:  # noqa: E501
-        """Finds a loyalty account by customer ID.
+    def find_by_id(self, id: int) -> Optional[LoyaltyAccount]:
+        """
+        Finds a loyalty account by its ID.
+
+        Args:
+            id (int): The unique identifier of the loyalty account.
+
+        Returns:
+            Optional[LoyaltyAccount]: The found loyalty account or None
+                if not found.
+        """
+        loyalty_account_table = super().find_by_id(id)
+        return (
+            LoyaltyAccountMapper.to_domain(loyalty_account_table)
+            if loyalty_account_table
+            else None
+        )
+
+    def find_by_customer_id(
+        self, customer_id: int
+    ) -> Optional[LoyaltyAccount]:
+        """
+        Finds a loyalty account by customer ID.
 
         Args:
             customer_id (int): The ID of the customer.
 
         Returns:
-            Optional[LoyaltyAccountTable]: The found loyalty account or None.
+            Optional[LoyaltyAccount]: The found loyalty account or None
+                if not found.
         """
-        return db.session.query(LoyaltyAccountTable).filter(
+        loyalty_account_table = db.session.query(LoyaltyAccountTable).filter(
             LoyaltyAccountTable.customer_id == customer_id).first()
+        return (
+            LoyaltyAccountMapper.to_domain(loyalty_account_table)
+            if loyalty_account_table
+            else None
+        )
 
-    def add_points(self, loyalty_account_id: int, points: int) -> LoyaltyAccountTable:  # noqa: E501
-        """Adds points to a loyalty account.
+    def create(self, loyalty_account: LoyaltyAccount) -> LoyaltyAccount:
+        """
+        Creates a new loyalty account.
+
+        Args:
+            loyalty_account (LoyaltyAccount): The loyalty account object
+            to create.
+
+        Returns:
+            LoyaltyAccount: The created LoyaltyAccount object.
+        """
+        loyalty_account_table: LoyaltyAccountTable = (
+            LoyaltyAccountMapper.to_persistence_model(loyalty_account))
+        created_account: LoyaltyAccountTable = super().create(
+            loyalty_account_table)
+        return LoyaltyAccountMapper.from_persistence(created_account)
+
+    def update(self, loyalty_account: LoyaltyAccount) -> LoyaltyAccount:
+        """
+        Updates an existing loyalty account.
+
+        Args:
+            loyalty_account (LoyaltyAccount): The loyalty account object
+            to update.
+
+        Returns:
+            LoyaltyAccount: The updated LoyaltyAccount object.
+        """
+        loyalty_account_table = LoyaltyAccountMapper.to_persistence(
+            loyalty_account)
+        updated_account = super().update(loyalty_account_table)
+        return LoyaltyAccountMapper.to_domain(updated_account)
+
+    def add_points(
+        self, loyalty_account_id: int, points: int
+    ) -> LoyaltyAccount:
+        """
+        Adds points to a loyalty account.
 
         Args:
             loyalty_account_id (int): The ID of the loyalty account.
             points (int): Number of points to add.
 
         Returns:
-            LoyaltyAccountTable: Updated loyalty account.
+            LoyaltyAccount: Updated loyalty account.
         """
         loyalty_account = self.find_by_id(loyalty_account_id)
         if loyalty_account:
             loyalty_account.points += points
-            db.session.commit()
-        return loyalty_account
+            return self.update(loyalty_account)
+        return None
 
-    def checkout_transaction(self, customer_id: int) -> Dict[str, any]:
-        """Processes a checkout transaction, calculating loyalty points.
+    def checkout_transaction(self, customer_id: int) -> Dict[str, Any]:
+        """
+        Processes a checkout transaction, calculating loyalty points.
 
         Args:
             customer_id (int): The ID of the customer.
 
         Returns:
-            Dict[str, any]: A dictionary with transaction details.
+            Dict[str, Any]: A dictionary with transaction details.
         """
         result = {
             'totalPointsEarned': 0,
@@ -71,20 +141,24 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
         current_date = datetime.utcnow().date()
 
         for item in cart.items:
-            product = db.session.query(ProductTable).get(item.product_id)
-            if not product:
+            product_table = db.session.query(ProductTable).get(item.product_id)
+            if not product_table:
                 result['invalidProducts'].append(item.product_id)
                 continue
 
-            if not product.category:
+            product = ProductMapper.to_domain(product_table)
+
+            if not product.category_id:
                 result['productsMissingCategory'].append(product.id)
                 continue
 
             rule = db.session.query(PointEarningRuleTable).filter(
                 PointEarningRuleTable.category_id == product.category_id,
                 PointEarningRuleTable.start_date <= current_date,
-                PointEarningRuleTable.end_date.is_(None) |
-                PointEarningRuleTable.end_date >= current_date
+                db.or_(
+                    PointEarningRuleTable.end_date.is_(None),
+                    PointEarningRuleTable.end_date >= current_date
+                )
             ).first()
 
             if not rule:
@@ -104,6 +178,8 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
             db.session.add(transaction)
 
         loyalty_account.points += result['totalPointsEarned']
+        self.update(loyalty_account)
+
         db.session.commit()
 
         return result

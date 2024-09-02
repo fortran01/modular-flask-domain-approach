@@ -11,6 +11,9 @@ from app.schemas.customer import (
     CustomerUpdateDto,
     CustomerResponseDto
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CustomerService:
@@ -70,7 +73,6 @@ class CustomerService:
             email=customer_dto.email
         )
         created_customer: Customer = self.customer_repository.create(customer)
-
         loyalty_account: LoyaltyAccount = LoyaltyAccount(
             id=0,  # ID will be assigned by the database
             customer_id=created_customer.id,

@@ -1,19 +1,24 @@
 # app/repositories/shopping_cart_repository.py
+from typing import Optional
 from app.repositories.base_repository import BaseRepository
 from app.models.database.shopping_cart import (
     ShoppingCartTable,
     ShoppingCartItemTable,
 )
-from typing import Optional
+from app.models.domain.shopping_cart import ShoppingCart
+from app.mappers.shopping_cart_mapper import ShoppingCartMapper
 from app import db
 
 
 class ShoppingCartRepository(BaseRepository[ShoppingCartTable]):
     def __init__(self):
-        """Initializes ShoppingCartRepository with ShoppingCartTable."""
+        """
+        Initializes the ShoppingCartRepository with the
+        ShoppingCartTable model.
+        """
         super().__init__(ShoppingCartTable)
 
-    def find_by_customer_id(self, customer_id: int) -> Optional[ShoppingCartTable]:  # noqa: E501
+    def find_by_customer_id(self, customer_id: int) -> Optional[ShoppingCart]:
         """
         Retrieves a shopping cart by the customer ID.
 
@@ -21,10 +26,33 @@ class ShoppingCartRepository(BaseRepository[ShoppingCartTable]):
             customer_id (int): The ID of the customer.
 
         Returns:
-            Optional[ShoppingCartTable]: The found shopping cart or None.
+            Optional[ShoppingCart]: The found shopping cart
+            or None if not found.
         """
-        return db.session.query(ShoppingCartTable).filter(
+        cart_table = db.session.query(ShoppingCartTable).filter(
             ShoppingCartTable.customer_id == customer_id).first()
+        return (
+            ShoppingCartMapper.to_domain(cart_table)
+            if cart_table
+            else None
+        )
+
+    def save(self, cart: ShoppingCart) -> ShoppingCart:
+        """
+        Saves a shopping cart to the database.
+
+        Args:
+            cart (ShoppingCart): The ShoppingCart object to save.
+
+        Returns:
+            ShoppingCart: The saved ShoppingCart object.
+        """
+        cart_table = ShoppingCartMapper.to_persistence(cart)
+        if cart.id:
+            saved_cart = super().update(cart_table)
+        else:
+            saved_cart = super().create(cart_table)
+        return ShoppingCartMapper.to_domain(saved_cart)
 
     def add_item(self, cart_id: int, product_id: int, quantity: int) -> None:
         """
@@ -64,7 +92,9 @@ class ShoppingCartRepository(BaseRepository[ShoppingCartTable]):
         ).delete()
         db.session.commit()
 
-    def update_item_quantity(self, cart_id: int, product_id: int, quantity: int) -> None:  # noqa: E501
+    def update_item_quantity(
+        self, cart_id: int, product_id: int, quantity: int
+    ) -> None:
         """
         Updates the quantity of an item in the shopping cart.
 
@@ -92,3 +122,21 @@ class ShoppingCartRepository(BaseRepository[ShoppingCartTable]):
         db.session.query(ShoppingCartItemTable).filter(
             ShoppingCartItemTable.cart_id == cart_id).delete()
         db.session.commit()
+
+    def get_cart_with_items(self, cart_id: int) -> Optional[ShoppingCart]:
+        """
+        Retrieves a shopping cart along with its items.
+
+        Args:
+            cart_id (int): The ID of the cart.
+
+        Returns:
+            Optional[ShoppingCart]: The shopping cart with items
+            or None if not found.
+        """
+        cart_table = db.session.query(ShoppingCartTable).filter(
+            ShoppingCartTable.id == cart_id).options(
+            db.joinedload(ShoppingCartTable.items).joinedload(
+                ShoppingCartItemTable.product)
+        ).first()
+        return ShoppingCartMapper.to_domain(cart_table) if cart_table else None

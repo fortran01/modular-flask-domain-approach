@@ -2,7 +2,11 @@
 from flask import Blueprint, request, jsonify, g, Response, make_response
 from app.serialization.customer_serializer import CustomerSerializer
 from app.guards.auth_guard import AuthGuard
+from app.schemas.customer import CustomerCreateDto
 from typing import List, Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint('customer', __name__)
 
@@ -61,8 +65,15 @@ def create_customer() -> Response:
         status code 201.
     """
     customer_service = g.container.resolve('customer_service')
-    data = request.json
-    customer_dto = CustomerSerializer.deserialize_create(data)
+
+    try:
+        data = request.json
+    except Exception as e:
+        logger.error(f"Failed to parse JSON from request: {str(e)}")
+        return make_response(jsonify({'message': 'Invalid JSON format'}), 400)
+
+    customer_dto: CustomerCreateDto = CustomerSerializer.deserialize_create(
+        data)
     created_customer = customer_service.create(customer_dto)
     serialized_customer: Dict[str, Any] = CustomerSerializer. \
         serialize_response(created_customer)

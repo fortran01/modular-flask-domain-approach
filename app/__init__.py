@@ -1,5 +1,5 @@
 # app/__init__.py
-from flask import Flask
+from flask import Flask, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from config.config import Config
@@ -7,11 +7,14 @@ from app.di_container import register_dependencies
 from typing import Type
 from app.controllers.loyalty_controller import bp as loyalty_bp
 from app.controllers.product_controller import bp as product_bp
+from app.controllers.customer_controller import bp as customer_bp
 from app.utils.error_handlers import (
     handle_validation_error, handle_value_error
 )
 from pydantic import ValidationError
-from flask import Response, jsonify
+import logging
+from logging.config import dictConfig
+from config.logging_config import LOGGING_CONFIG
 
 db: SQLAlchemy = SQLAlchemy()
 migrate: Migrate = Migrate()
@@ -33,6 +36,10 @@ def create_app(config_class: Type[Config] = Config) -> Flask:
     Returns:
         Flask: A configured Flask application instance.
     """
+    # Configure logging
+    dictConfig(LOGGING_CONFIG)
+    logger = logging.getLogger(__name__)
+
     app: Flask = Flask(__name__)
     app.config.from_object(config_class)
 
@@ -45,6 +52,7 @@ def create_app(config_class: Type[Config] = Config) -> Flask:
     # Register blueprints here
     app.register_blueprint(loyalty_bp)
     app.register_blueprint(product_bp)
+    app.register_blueprint(customer_bp)
 
     # Register error handlers
     app.register_error_handler(ValidationError, handle_validation_error)
@@ -67,5 +75,7 @@ def create_app(config_class: Type[Config] = Config) -> Flask:
         """
         response = Response("OK", status=200)
         return response
+
+    logger.info('Application started')
 
     return app

@@ -1,6 +1,9 @@
 # app/repositories/base_repository.py
 from typing import TypeVar, Generic, List, Optional
 from app import db
+import logging
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar('T')
 
@@ -78,7 +81,14 @@ class BaseRepository(Generic[T]):
         Args:
             id (int): The ID of the entity to delete.
         """
-        entity = self.find_by_id(id)
+        entity = db.session.query(self.model).filter_by(id=id).first()
         if entity:
-            db.session.delete(entity)
-            db.session.commit()
+            try:
+                db.session.delete(entity)
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Error deleting entity with ID {id}: {e}")
+                raise e
+        else:
+            logger.error(f"Entity with ID {id} not found.")
+            raise ValueError(f"Entity with ID {id} not found.")
