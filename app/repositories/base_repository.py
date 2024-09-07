@@ -1,6 +1,5 @@
 # app/repositories/base_repository.py
 from typing import TypeVar, Generic, List, Optional
-from app import db
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,6 +34,7 @@ class BaseRepository(Generic[T]):
         Returns:
             Optional[T]: The found entity or None if not found.
         """
+        from app import db
         return db.session.query(self.model).filter(self.model.id == id).first()
 
     def find_all(self) -> List[T]:
@@ -44,6 +44,7 @@ class BaseRepository(Generic[T]):
         Returns:
             List[T]: A list of all entities.
         """
+        from app import db
         return db.session.query(self.model).all()
 
     def create(self, entity: T) -> T:
@@ -56,6 +57,7 @@ class BaseRepository(Generic[T]):
         Returns:
             T: The created entity.
         """
+        from app import db
         db.session.add(entity)
         db.session.commit()
         return entity
@@ -70,6 +72,7 @@ class BaseRepository(Generic[T]):
         Returns:
             T: The updated entity.
         """
+        from app import db
         db.session.merge(entity)
         db.session.commit()
         return entity
@@ -81,6 +84,7 @@ class BaseRepository(Generic[T]):
         Args:
             id (int): The ID of the entity to delete.
         """
+        from app import db
         entity = db.session.query(self.model).filter_by(id=id).first()
         if entity:
             try:

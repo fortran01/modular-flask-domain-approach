@@ -1,14 +1,41 @@
 # app/controllers/loyalty_controller.py
+from typing import List, Dict, Any
+from flask import render_template
 from flask import (Blueprint, request, jsonify, g, make_response, abort,
                    Response)
 from app.serialization.loyalty_serializer import LoyaltySerializer
 from app.guards.auth_guard import AuthGuard
-from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint('loyalty', __name__)
+
+
+@bp.route('/')
+def index() -> str:
+    """
+    Render the index page with customer and product data.
+
+    This route checks if a customer is logged in by looking for a 'customer_id'
+    cookie. If logged in, it fetches all products. It then renders the index
+    template with the appropriate data.
+
+    Returns:
+        str: Rendered HTML content of the index page.
+    """
+    customer_id: str | None = request.cookies.get('customer_id')
+    logged_in: bool = bool(customer_id)
+    products: List[Dict[str, Any]] = []
+
+    if logged_in:
+        product_service = g.container.resolve('product_service')
+        products: List[Dict[str, Any]] = product_service.find_all()
+
+    return render_template('index.html',
+                           logged_in=logged_in,
+                           customer_id=customer_id,
+                           products=products)
 
 
 @bp.route('/login', methods=['POST'])
@@ -96,7 +123,8 @@ def add_to_cart() -> Response:
     """
     shopping_cart_service = g.container.resolve('shopping_cart_service')
     customer_id = g.customer_id
-    product_id = request.json.get('product_id')
+    logger.info(f"request: {request.json}")
+    product_id = request.json.get('productId')
     quantity = request.json.get('quantity')
     shopping_cart_service.add_item(
         int(customer_id), int(product_id), int(quantity))
