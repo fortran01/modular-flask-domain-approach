@@ -12,3 +12,4 @@ archive/
 .vscode/
 *.log
 repopack*
+app.db
