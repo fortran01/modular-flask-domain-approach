@@ -123,7 +123,7 @@ def add_to_cart() -> Response:
     """
     shopping_cart_service = g.container.resolve('shopping_cart_service')
     customer_id = g.customer_id
-    logger.info(f"request: {request.json}")
+    logger.debug(f"request: {request.json}")
     product_id = request.json.get('productId')
     quantity = request.json.get('quantity')
     shopping_cart_service.add_item(
