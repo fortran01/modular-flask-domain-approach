@@ -131,7 +131,7 @@ def test_add_to_cart(authenticated_client, app, mocker):
         mocker.patch('flask.g.container.resolve',
                      return_value=mock_shopping_cart_service)
         # Arrange
-        item_data = {'product_id': 10, 'quantity': 2}
+        item_data = {'productId': 10, 'quantity': 2}
         mock_shopping_cart_service.add_item.return_value = {'success': True}
 
         # Act

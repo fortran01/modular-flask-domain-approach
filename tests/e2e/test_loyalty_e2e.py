@@ -168,7 +168,7 @@ class TestLoyaltyE2E(BaseTestCase):
         # Arrange
         self.client.set_cookie('customer_id', str(self.customer.id))
         cart_data = {
-            "product_id": self.product1.id,
+            "productId": self.product1.id,
             "quantity": 2
         }
 
