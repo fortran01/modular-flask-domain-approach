@@ -182,8 +182,6 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
                     )
                     logger.debug(f"Points earned: {points_earned}")
                     result['totalPointsEarned'] += points_earned
-                    logger.debug(f"Total points earned: {
-                                 result['totalPointsEarned']}")
 
                     transaction: PointTransactionTable = PointTransactionTable(
                         loyalty_account_id=loyalty_account.id,
