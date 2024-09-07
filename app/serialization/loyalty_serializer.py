@@ -2,6 +2,7 @@
 from app.serialization.base_serializer import BaseSerializer
 from app.schemas.checkout import CheckoutResponseDto
 from app.schemas.points import PointsDto
+from app.schemas.shopping_cart import ShoppingCartResponseDto
 
 
 class LoyaltySerializer(BaseSerializer):
@@ -32,3 +33,17 @@ class LoyaltySerializer(BaseSerializer):
             dict: The serialized points data.
         """
         return BaseSerializer.serialize(points)
+
+    @staticmethod
+    def serialize_shopping_cart(cart_dto: ShoppingCartResponseDto) -> dict:
+        """
+        Serializes a ShoppingCartResponseDto into a dictionary.
+
+        Args:
+            cart_dto (ShoppingCartResponseDto): The shopping cart data
+                transfer object.
+
+        Returns:
+            dict: The serialized shopping cart data.
+        """
+        return BaseSerializer.serialize(cart_dto)

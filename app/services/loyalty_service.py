@@ -4,6 +4,9 @@ from app.repositories.loyalty_account_repository import (
 )
 from app.schemas.checkout import CheckoutResponseDto
 from app.schemas.points import PointsDto
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LoyaltyService:
@@ -33,15 +36,23 @@ class LoyaltyService:
         result: dict = self.loyalty_account_repository.checkout_transaction(
             customer_id)
 
-        return CheckoutResponseDto(
-            total_points_earned=result['totalPointsEarned'],
-            invalid_products=result['invalidProducts'],
-            products_missing_category=result['productsMissingCategory'],
-            point_earning_rules_missing=result['pointEarningRulesMissing'],
-            success=(len(result['invalidProducts']) == 0 and
-                     len(result['productsMissingCategory']) == 0 and
-                     len(result['pointEarningRulesMissing']) == 0)
-        )
+        logger.debug(f"result: {result}")
+
+        try:
+            checkout_response = CheckoutResponseDto(
+                total_points_earned=result['totalPointsEarned'],
+                invalid_products=result['invalidProducts'],
+                products_missing_category=result['productsMissingCategory'],
+                point_earning_rules_missing=result['pointEarningRulesMissing'],
+                success=(len(result['invalidProducts']) == 0 and
+                         len(result['productsMissingCategory']) == 0 and
+                         len(result['pointEarningRulesMissing']) == 0)
+            )
+        except Exception as e:
+            logger.error(f"Error processing checkout: {e}")
+            raise e
+
+        return checkout_response
 
     def get_customer_points(self, customer_id: int) -> PointsDto:
         """

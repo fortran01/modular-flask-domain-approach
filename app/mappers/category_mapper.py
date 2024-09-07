@@ -48,24 +48,6 @@ class CategoryMapper(BaseMapper[Category]):
         )
 
     @classmethod
-    def to_persistence(cls, domain_model: Category) -> Dict[str, Any]:
-        """
-        Convert a Category domain model instance to a dictionary
-        suitable for database persistence.
-
-        Args:
-            domain_model (Category): The Category domain model instance.
-
-        Returns:
-            Dict[str, Any]: A dictionary representing the category
-            for persistence.
-        """
-        return {
-            'id': domain_model.id,
-            'name': domain_model.name
-        }
-
-    @classmethod
     def from_create_dto(cls, dto: CategoryCreateDto) -> Category:
         """
         Create a Category domain model instance from a CategoryCreateDto.

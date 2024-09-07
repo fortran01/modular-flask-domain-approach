@@ -3,6 +3,11 @@ from flask import (Blueprint, request, jsonify, g, make_response, abort,
                    Response)
 from app.serialization.loyalty_serializer import LoyaltySerializer
 from app.guards.auth_guard import AuthGuard
+from typing import Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
+
 bp = Blueprint('loyalty', __name__)
 
 
@@ -57,7 +62,12 @@ def checkout() -> Response:
     loyalty_service = g.container.resolve('loyalty_service')
     customer_id = g.customer_id
     result = loyalty_service.checkout(int(customer_id))
-    serialized = LoyaltySerializer.serialize_checkout_response(result)
+    serialized: Dict[str, Any] = LoyaltySerializer. \
+        serialize_checkout_response(result)
+    logger.debug(f"serialized: {serialized}")
+    if serialized.get('success', False):
+        shopping_cart_service = g.container.resolve('shopping_cart_service')
+        shopping_cart_service.clear_cart(int(customer_id))
     return make_response(jsonify(serialized), 200)
 
 
@@ -102,9 +112,10 @@ def get_cart() -> Response:
     shopping_cart_service = g.container.resolve('shopping_cart_service')
     customer_id = g.customer_id
     cart = shopping_cart_service.get_cart(int(customer_id))
+    serialized = LoyaltySerializer.serialize_shopping_cart(cart)
     if not cart:
         abort(404, description="Shopping cart not found")
-    return make_response(jsonify(cart), 200)
+    return make_response(jsonify(serialized), 200)
 
 
 @bp.route('/cart/<int:product_id>', methods=['PUT'])

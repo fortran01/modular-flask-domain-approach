@@ -63,28 +63,6 @@ class PointEarningRuleMapper(BaseMapper[PointEarningRule]):
         )
 
     @classmethod
-    def to_persistence(cls, domain_model: PointEarningRule) -> Dict[str, Any]:
-        """
-        Convert a PointEarningRule domain model instance to a dictionary
-        suitable for database persistence.
-
-        Args:
-            domain_model (PointEarningRule): The PointEarningRule
-            domain model instance.
-
-        Returns:
-            Dict[str, Any]: A dictionary representing the point earning rule
-                for persistence.
-        """
-        return {
-            'id': domain_model.id,
-            'category_id': domain_model.category_id,
-            'points_per_dollar': domain_model.points_per_dollar,
-            'start_date': domain_model.start_date,
-            'end_date': domain_model.end_date
-        }
-
-    @classmethod
     def from_create_dto(cls, dto: PointEarningRuleCreateDto) -> PointEarningRule:  # noqa: E501
         """
         Create a PointEarningRule domain model instance from

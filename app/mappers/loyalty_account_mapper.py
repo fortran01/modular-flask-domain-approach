@@ -47,26 +47,6 @@ class LoyaltyAccountMapper(BaseMapper[LoyaltyAccount]):
         return PointsDto(points=domain_model.points)
 
     @classmethod
-    def to_persistence(cls, domain_model: LoyaltyAccount) -> Dict[str, Any]:
-        """
-        Convert a LoyaltyAccount domain model instance to a dictionary
-        suitable for database persistence.
-
-        Args:
-            domain_model (LoyaltyAccount): The LoyaltyAccount domain
-                model instance.
-
-        Returns:
-            Dict[str, Any]: A dictionary representing the loyalty account
-            for persistence.
-        """
-        return {
-            'id': domain_model.id,
-            'customer_id': domain_model.customer_id,
-            'points': domain_model.points
-        }
-
-    @classmethod
     def from_persistence(cls, db_model: LoyaltyAccountTable) -> LoyaltyAccount:
         """
         Convert a LoyaltyAccountTable database model to a LoyaltyAccount

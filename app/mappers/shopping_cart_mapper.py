@@ -58,27 +58,6 @@ class ShoppingCartMapper(BaseMapper[ShoppingCart]):
         )
 
     @classmethod
-    def to_persistence(cls, domain_model: ShoppingCart) -> Dict[str, Any]:
-        """
-        Convert a ShoppingCart domain model instance to a dictionary
-        suitable for database persistence.
-
-        Args:
-            domain_model (ShoppingCart): The ShoppingCart domain
-            model instance.
-
-        Returns:
-            Dict[str, Any]: A dictionary representing the shopping cart
-              for persistence.
-        """
-        return {
-            'id': domain_model.id,
-            'customer_id': domain_model.customer_id,
-            'items': [cls._item_to_persistence(item) for item in
-                      domain_model.items]
-        }
-
-    @classmethod
     def from_persistence(cls, db_model: ShoppingCartTable) -> ShoppingCart:
         """
         Convert a ShoppingCartTable database model to a ShoppingCart

@@ -32,7 +32,7 @@ class ShoppingCartRepository(BaseRepository[ShoppingCartTable]):
         cart_table = db.session.query(ShoppingCartTable).filter(
             ShoppingCartTable.customer_id == customer_id).first()
         return (
-            ShoppingCartMapper.to_domain(cart_table)
+            ShoppingCartMapper.from_persistence(cart_table)
             if cart_table
             else None
         )

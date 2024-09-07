@@ -56,27 +56,6 @@ class ProductMapper(BaseMapper[Product]):
         )
 
     @classmethod
-    def to_persistence(cls, domain_model: Product) -> Dict[str, Any]:
-        """
-        Convert a Product domain model instance to a dictionary
-        suitable for database persistence.
-
-        Args:
-            domain_model (Product): The Product domain model instance.
-
-        Returns:
-            Dict[str, Any]: A dictionary representing the product
-                for persistence.
-        """
-        return {
-            'id': domain_model.id,
-            'name': domain_model.name,
-            'price': domain_model.price,
-            'category_id': domain_model.category_id,
-            'image_url': domain_model.image_url
-        }
-
-    @classmethod
     def from_create_dto(cls, dto: ProductCreateDto) -> Product:
         """
         Create a Product domain model instance from a ProductCreateDto.

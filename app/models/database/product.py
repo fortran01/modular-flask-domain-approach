@@ -1,7 +1,7 @@
 # app/models/database/product.py
 from __future__ import annotations
 from app import db
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List
 from sqlalchemy.orm import Mapped
 if TYPE_CHECKING:
@@ -36,12 +36,14 @@ class ProductTable(db.Model):
     id: Mapped[int] = db.Column(db.Integer, primary_key=True)
     name: Mapped[str] = db.Column(db.String(100), nullable=False)
     price: Mapped[float] = db.Column(db.Float, nullable=False)
+    image_url: Mapped[str] = db.Column(db.String(255), nullable=True)
     category_id: Mapped[int] = db.Column(db.Integer, db.ForeignKey(
         'categories.id'), nullable=False)
     created_at: Mapped[datetime] = db.Column(
-        db.DateTime, default=datetime.utcnow)
+        db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+        db.DateTime, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     category: Mapped["CategoryTable"] = db.relationship(

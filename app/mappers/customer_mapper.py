@@ -58,25 +58,6 @@ class CustomerMapper(BaseMapper[Customer]):
             email=domain_model.email
         )
 
-    # @classmethod
-    # def to_persistence(cls, domain_model: Customer) -> Dict[str, Any]:
-    #     """
-    #     Convert a Customer domain model instance to a dictionary
-    #     suitable for database persistence.
-
-    #     Args:
-    #         domain_model (Customer): The Customer domain model instance.
-
-    #     Returns:
-    #         Dict[str, Any]: A dictionary representing the customer
-    #         for persistence.
-    #     """
-    #     return {
-    #         'id': domain_model.id,
-    #         'name': domain_model.name,
-    #         'email': domain_model.email
-    #     }
-
     @classmethod
     def from_create_dto(cls, dto: CustomerCreateDto) -> Customer:
         """

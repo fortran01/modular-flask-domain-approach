@@ -1,6 +1,6 @@
 # app/repositories/loyalty_account_repository.py
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from app.repositories.base_repository import BaseRepository
 from app.models.database.loyalty_account import LoyaltyAccountTable
 from app.models.database.point_transaction import PointTransactionTable
@@ -11,6 +11,9 @@ from app.models.domain.loyalty_account import LoyaltyAccount
 from app.mappers.loyalty_account_mapper import LoyaltyAccountMapper
 from app.mappers.product_mapper import ProductMapper
 from app import db
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
@@ -55,7 +58,7 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
         loyalty_account_table = db.session.query(LoyaltyAccountTable).filter(
             LoyaltyAccountTable.customer_id == customer_id).first()
         return (
-            LoyaltyAccountMapper.to_domain(loyalty_account_table)
+            LoyaltyAccountMapper.from_persistence(loyalty_account_table)
             if loyalty_account_table
             else None
         )
@@ -88,10 +91,11 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
         Returns:
             LoyaltyAccount: The updated LoyaltyAccount object.
         """
-        loyalty_account_table = LoyaltyAccountMapper.to_persistence(
-            loyalty_account)
-        updated_account = super().update(loyalty_account_table)
-        return LoyaltyAccountMapper.to_domain(updated_account)
+        loyalty_account_table: LoyaltyAccountTable = (
+            LoyaltyAccountMapper.to_persistence_model(loyalty_account))
+        updated_account: LoyaltyAccountTable = super().update(
+            loyalty_account_table)
+        return LoyaltyAccountMapper.from_persistence(updated_account)
 
     def add_points(
         self, loyalty_account_id: int, points: int
@@ -129,7 +133,9 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
             'pointEarningRulesMissing': []
         }
 
-        loyalty_account = self.find_by_customer_id(customer_id)
+        loyalty_account_table = self.find_by_customer_id(customer_id)
+        loyalty_account = LoyaltyAccountMapper.from_persistence(
+            loyalty_account_table)
         if not loyalty_account:
             raise ValueError("Loyalty account not found")
 
@@ -138,7 +144,7 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
         if not cart or not cart.items:
             raise ValueError("Shopping cart is empty or not found")
 
-        current_date = datetime.utcnow().date()
+        current_date = datetime.now(timezone.utc).date()
 
         for item in cart.items:
             product_table = db.session.query(ProductTable).get(item.product_id)
@@ -146,7 +152,7 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
                 result['invalidProducts'].append(item.product_id)
                 continue
 
-            product = ProductMapper.to_domain(product_table)
+            product = ProductMapper.from_persistence(product_table)
 
             if not product.category_id:
                 result['productsMissingCategory'].append(product.id)
@@ -166,19 +172,24 @@ class LoyaltyAccountRepository(BaseRepository[LoyaltyAccountTable]):
                 continue
 
             points_earned = int(
-                product.price * rule.points_per_dollar) * item.quantity
+                product.price * rule.points_per_dollar * item.quantity
+            )
+            logger.debug(f"Points earned: {points_earned}")
             result['totalPointsEarned'] += points_earned
+            logger.debug(f"Total points earned: {result['totalPointsEarned']}")
 
-            transaction = PointTransactionTable(
+            transaction: PointTransactionTable = PointTransactionTable(
                 loyalty_account_id=loyalty_account.id,
                 product_id=product.id,
                 points_earned=points_earned,
-                transaction_date=datetime.utcnow()
+                transaction_date=datetime.now(timezone.utc)
             )
             db.session.add(transaction)
 
         loyalty_account.points += result['totalPointsEarned']
-        self.update(loyalty_account)
+        loyalty_account_table: LoyaltyAccountTable = (
+            LoyaltyAccountMapper.to_persistence_model(loyalty_account))
+        self.update(loyalty_account_table)
 
         db.session.commit()
 

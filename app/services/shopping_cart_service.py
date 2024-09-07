@@ -8,6 +8,10 @@ from app.schemas.shopping_cart import (
     ShoppingCartItemDto
 )
 from app.schemas.product import ProductResponseDto
+from app.mappers.shopping_cart_mapper import ShoppingCartMapper
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ShoppingCartService:
@@ -44,7 +48,10 @@ class ShoppingCartService:
             self.shopping_cart_repository.find_by_customer_id(customer_id)
         if not cart:
             cart = ShoppingCart(id=0, customer_id=customer_id)
+            cart = ShoppingCartMapper.to_persistence_model(cart)
             cart = self.shopping_cart_repository.create(cart)
+
+        cart = ShoppingCartMapper.from_persistence(cart)
         return cart
 
     def add_item(
@@ -63,6 +70,7 @@ class ShoppingCartService:
             self.product_repository.find_by_id(product_id)
         if product:
             cart.add_item(product, quantity)
+            cart = ShoppingCartMapper.to_persistence_model(cart)
             self.shopping_cart_repository.update(cart)
 
     def remove_item(self, customer_id: int, product_id: int) -> None:
@@ -75,6 +83,7 @@ class ShoppingCartService:
         """
         cart: ShoppingCart = self.get_or_create_cart(customer_id)
         cart.remove_item(product_id)
+        cart = ShoppingCartMapper.to_persistence_model(cart)
         self.shopping_cart_repository.update(cart)
 
     def update_item_quantity(
@@ -90,6 +99,7 @@ class ShoppingCartService:
         """
         cart: ShoppingCart = self.get_or_create_cart(customer_id)
         cart.update_item_quantity(product_id, quantity)
+        cart = ShoppingCartMapper.to_persistence_model(cart)
         self.shopping_cart_repository.update(cart)
 
     def get_cart(
@@ -139,4 +149,7 @@ class ShoppingCartService:
         """
         cart: ShoppingCart = self.get_or_create_cart(customer_id)
         cart.clear()
-        self.shopping_cart_repository.update(cart)
+        self.shopping_cart_repository.update(
+            ShoppingCartMapper.to_persistence_model(cart)
+        )
+        logger.debug(f"Cleared cart for customer {customer_id}")

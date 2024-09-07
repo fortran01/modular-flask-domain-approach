@@ -59,25 +59,6 @@ class PointTransactionMapper(BaseMapper[PointTransaction]):
         )
 
     @classmethod
-    def to_persistence(cls, domain_model: PointTransaction) -> Dict[str, Any]:
-        """
-        Convert PointTransaction model to dict for persistence.
-
-        Args:
-            domain_model (PointTransaction): PointTransaction model.
-
-        Returns:
-            Dict[str, Any]: Dict for transaction persistence.
-        """
-        return {
-            'id': domain_model.id,
-            'loyalty_account_id': domain_model.loyalty_account.id if domain_model.loyalty_account else None,  # noqa: E501
-            'product_id': domain_model.product.id if domain_model.product else None,  # noqa: E501
-            'points_earned': domain_model.points_earned,
-            'transaction_date': domain_model.transaction_date
-        }
-
-    @classmethod
     def from_persistence(
             cls, db_model: PointTransactionTable
     ) -> PointTransaction:

@@ -26,7 +26,7 @@ class ProductRepository(BaseRepository[ProductTable]):
         """
         product_table = super().find_by_id(id)
         return (
-            ProductMapper.to_domain(product_table)
+            ProductMapper.from_persistence(product_table)
             if product_table
             else None
         )
