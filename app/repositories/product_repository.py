@@ -39,7 +39,8 @@ class ProductRepository(BaseRepository[ProductTable]):
             List[Product]: A list of all Product objects.
         """
         product_tables = super().find_all()
-        return [ProductMapper.to_domain(product) for product in product_tables]
+        return [ProductMapper.from_persistence(product)
+                for product in product_tables]
 
     def find_by_category(self, category_id: int) -> List[Product]:
         """
@@ -53,7 +54,8 @@ class ProductRepository(BaseRepository[ProductTable]):
         """
         product_tables = db.session.query(ProductTable).filter(
             ProductTable.category_id == category_id).all()
-        return [ProductMapper.to_domain(product) for product in product_tables]
+        return [ProductMapper.from_persistence(product)
+                for product in product_tables]
 
     def create(self, product: Product) -> Product:
         """
@@ -65,9 +67,9 @@ class ProductRepository(BaseRepository[ProductTable]):
         Returns:
             Product: The created Product object.
         """
-        product_table = ProductMapper.to_persistence(product)
+        product_table = ProductMapper.to_persistence_model(product)
         created_product = super().create(product_table)
-        return ProductMapper.to_domain(created_product)
+        return ProductMapper.from_persistence(created_product)
 
     def update(self, product: Product) -> Product:
         """
@@ -79,9 +81,9 @@ class ProductRepository(BaseRepository[ProductTable]):
         Returns:
             Product: The updated Product object.
         """
-        product_table = ProductMapper.to_persistence(product)
+        product_table = ProductMapper.to_persistence_model(product)
         updated_product = super().update(product_table)
-        return ProductMapper.to_domain(updated_product)
+        return ProductMapper.from_persistence(updated_product)
 
     def delete(self, id: int) -> None:
         """

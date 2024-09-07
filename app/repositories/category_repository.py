@@ -17,12 +17,13 @@ class CategoryRepository(BaseRepository[CategoryTable]):
 
     def find_by_id(self, id: int) -> Optional[Category]:
         category_table = super().find_by_id(id)
-        return CategoryMapper.to_domain(category_table) \
+        return CategoryMapper.from_persistence(category_table) \
             if category_table else None
 
     def find_all(self) -> List[Category]:
         category_tables = super().find_all()
-        return [CategoryMapper.to_domain(cat) for cat in category_tables]
+        return [CategoryMapper.from_persistence(cat)
+                for cat in category_tables]
 
     def find_with_active_rule(self, date: str) -> List[Category]:
         date_obj = datetime.strptime(date, '%Y-%m-%d').date()
@@ -39,17 +40,18 @@ class CategoryRepository(BaseRepository[CategoryTable]):
                 )
             )
         ).all()
-        return [CategoryMapper.to_domain(cat) for cat in category_tables]
+        return [CategoryMapper.from_persistence(cat)
+                for cat in category_tables]
 
     def create(self, category: Category) -> Category:
-        category_table = CategoryMapper.to_persistence(category)
+        category_table = CategoryMapper.to_persistence_model(category)
         created_category = super().create(category_table)
-        return CategoryMapper.to_domain(created_category)
+        return CategoryMapper.from_persistence(created_category)
 
     def update(self, category: Category) -> Category:
-        category_table = CategoryMapper.to_persistence(category)
+        category_table = CategoryMapper.to_persistence_model(category)
         updated_category = super().update(category_table)
-        return CategoryMapper.to_domain(updated_category)
+        return CategoryMapper.from_persistence(updated_category)
 
     def delete(self, id: int) -> None:
         super().delete(id)
