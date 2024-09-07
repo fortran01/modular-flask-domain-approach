@@ -20,3 +20,12 @@ pip install -r requirements.txt
 ## Usage
 
 <!-- TODO: Add usage instructions -->
+
+## Seeding the database
+
+```bash
+flask db init
+flask db migrate
+flask db upgrade
+python run.py seed
+```
