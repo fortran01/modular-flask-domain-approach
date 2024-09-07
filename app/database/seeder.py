@@ -63,13 +63,13 @@ class DatabaseSeeder:
                 name='Laptop',
                 price=1200.00,
                 category=electronics,
-                image_url='https://example.com/laptop.jpg'
+                image_url='https://upload.wikimedia.org/wikipedia/commons/e/e9/Apple-desk-laptop-macbook-pro_%2823699397893%29.jpg'  # noqa: E501
             ),
             ProductTable(
                 name='Science Fiction Book',
                 price=15.99,
                 category=books,
-                image_url='https://example.com/scifi-book.jpg'
+                image_url='https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Eric_Frank_Russell_-_Die_Gro%C3%9Fe_Explosion_-_Cover.jpg/770px-Eric_Frank_Russell_-_Die_Gro%C3%9Fe_Explosion_-_Cover.jpg'  # noqa: E501
             ),
         ]
         self.db.session.add_all(products)
